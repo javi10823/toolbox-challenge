@@ -1,10 +1,13 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { getFiles } from "../actions/file";
+import { getFileList, getFiles } from "../actions/file";
 
 const initialState = {
   isLoadingGetFiles: false,
+  isLoadingGetFileList: false,
   errorGetFiles: null,
+  errorGetFileList: null,
   files: [],
+  fileList: [],
 };
 
 const fileSlice = createSlice({
@@ -25,6 +28,19 @@ const fileSlice = createSlice({
       .addCase(getFiles.rejected, (state, { payload }) => {
         state.errorGetFiles = payload || null;
         state.isLoadingGetFiles = false;
+      })
+      // getFileList
+      .addCase(getFileList.pending, (state) => {
+        state.isLoadingGetFileList = true;
+        state.errorGetFileList = null;
+      })
+      .addCase(getFileList.fulfilled, (state, { payload }) => {
+        state.fileList = payload;
+        state.isLoadingGetFileList = false;
+      })
+      .addCase(getFileList.rejected, (state, { payload }) => {
+        state.errorGetFileList = payload || null;
+        state.isLoadingGetFileList = false;
       });
   },
 });

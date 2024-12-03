@@ -6,7 +6,11 @@ import {
 
 export const getFilesData = async (req, res) => {
   try {
-    const files = await fetchFileList();
+    const { fileName: requestedFileName } = req.query;
+
+    const files = requestedFileName
+      ? [requestedFileName]
+      : await fetchFileList();
 
     const fileDataPromises = files.map(async (fileName) => {
       const fileContent = await downloadFileData(fileName);
