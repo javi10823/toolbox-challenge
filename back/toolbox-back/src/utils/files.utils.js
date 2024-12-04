@@ -1,33 +1,75 @@
-import axios from "axios";
+import https from "https";
 
-const BASE_URL = "https://echo-serv.tbxnet.com/v1/secret";
+const BASE_URL = "echo-serv.tbxnet.com";
 const API_KEY = "Bearer aSuperSecretKey";
 
-export const fetchFileList = async () => {
-  try {
-    const response = await axios.get(`${BASE_URL}/files`, {
-      headers: { Authorization: API_KEY },
+const getOptions = (path) => ({
+  hostname: BASE_URL,
+  path: path || "",
+  method: "GET",
+  headers: {
+    Authorization: API_KEY,
+  },
+});
+
+const handleResponse = (resolve, reject) => (response) => {
+  let data = "";
+
+  response.on("data", (chunk) => {
+    data += chunk;
+  });
+
+  response.on("end", () => {
+    try {
+      resolve(data);
+    } catch (error) {
+      console.error("Error:", error);
+      reject(new Error("Failed to parse response data"));
+    }
+  });
+
+  response.on("error", (err) => {
+    console.error("Error:", err.message);
+
+    reject(err);
+  });
+};
+
+const fetchData = (options) => {
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, handleResponse(resolve, reject));
+    req.on("error", (err) => {
+      console.error("Request failed:", err.message);
+      reject(new Error("Request failed: " + err.message));
     });
-    return response.data.files || [];
+    req.end();
+  });
+};
+
+const fetchFileList = async () => {
+  try {
+    const options = getOptions("/v1/secret/files");
+    const response = await fetchData(options);
+    return JSON.parse(response).files || [];
   } catch (error) {
     console.error("Error fetching file list:", error.message);
     throw new Error("Failed to fetch file list");
   }
 };
 
-export const downloadFileData = async (fileName) => {
+const downloadFileData = async (fileName) => {
   try {
-    const response = await axios.get(`${BASE_URL}/file/${fileName}`, {
-      headers: { Authorization: API_KEY },
-    });
-    return response.data;
+    const options = getOptions(`/v1/secret/file/${fileName}`);
+
+    const response = await fetchData(options);
+    return response;
   } catch (error) {
     console.warn(`Error fetching file: ${fileName}`);
     return null;
   }
 };
 
-export const processCSV = (csvContent, fileName) => {
+const processCSV = (csvContent, fileName) => {
   const lines = csvContent.split("\n");
   const result = [];
 
@@ -60,3 +102,4 @@ export const processCSV = (csvContent, fileName) => {
 
   return result;
 };
+export { fetchFileList, processCSV, downloadFileData };

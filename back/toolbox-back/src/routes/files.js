@@ -1,9 +1,18 @@
 import express from "express";
 const router = express.Router();
-import * as filesController from "../controllers/files.js";
+import { filesController } from "../controllers/files.js";
+import {
+  downloadFileData,
+  fetchFileList,
+  processCSV,
+} from "../utils/files.utils.js";
+const { getFilesData, getList } = filesController({
+  fetchFileList,
+  downloadFileData,
+  processCSV,
+});
+router.get("/data", getFilesData);
 
-router.get("/data", filesController.getFilesData);
-
-router.get("/list", filesController.getList);
+router.get("/list", getList);
 
 export default router;
